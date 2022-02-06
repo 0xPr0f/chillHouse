@@ -23,7 +23,7 @@ public class CovelentData : MonoBehaviour
     public PhotonView myView;
     public TMP_InputField datahubLobby;
     public TMP_InputField trasaction;
-
+    public GameObject VoiceMaster;
     public TMP_InputField addressField;
     bool isactiveHUB = false;
     bool isactiveLobby = false;
@@ -43,25 +43,9 @@ public class CovelentData : MonoBehaviour
    public  GameObject ListPrefab;
     public GameObject point;
     public Image NFTimage;
+    public List<GameObject> NFTimageSpawned = new List<GameObject>();
 
-    // vars
-    //The chain to interact with, using Polygon here
-    private string chain = "polygon";
-
-    // The current connect account
-    //string Address = PlayerPrefs.GetString("Account");
-    //    string Address = "0x772A4f348d85FDd00e89fDE4C7CAe8628c8DAd19";
-    //The network to interact with (mainnet, testnet)
-    private string network = "testnet";
-    //Contract to interact with, contract below is "Project: Pigeon Smart Contract
-
-    private string contract = "0x407D0E3BB4A87CCf78aAcDb5F1bb80214D147722";
-    //Token ID to pull from contract
     
-    //Used for storing metadata
-    Metadata metadata;
-
-
     private void Start()
     {
         addressField.text = "0x407D0E3BB4A87CCf78aAcDb5F1bb80214D147722";
@@ -72,6 +56,7 @@ public class CovelentData : MonoBehaviour
         if (!myView.IsMine)
         {
             UIMaster.SetActive(false);
+            VoiceMaster.SetActive(false);
         }
         CovDataHub.SetActive(false);
         CovDatalobby.SetActive(false);
@@ -98,11 +83,18 @@ public class CovelentData : MonoBehaviour
 
     private void CovData()
     {
-
+        
+            GetNftAsync();
+    
+       
         StartCoroutine(Data());
 
     }
 
+    IEnumerator wait()
+    {
+        yield return new WaitForSeconds(1f);
+    }
     IEnumerator Data()
     {
         var url = "https://api.covalenthq.com/v1/80001/tokens/" + addressField.text + "/nft_metadata/1/?quote-currency=USD&format=JSON&key=ckey_e22bfa8a9c734c1e816244b1529";
@@ -191,7 +183,7 @@ public class CovelentData : MonoBehaviour
     IEnumerator OnTrasactions(WWW req)
     {
         yield return req;
-        trasaction.text = JToken.Parse(req.text).ToString(Newtonsoft.Json.Formatting.Indented);
+        trasaction.text = JToken.Parse(req.text).ToString(Formatting.Indented);
 
 
     }
@@ -213,17 +205,34 @@ public class CovelentData : MonoBehaviour
         }
     }
 
+
     public async void GetNftAsync()
     {
-      NftCollection collection = await MoralisInterface.GetClient().Web3Api.Token.GetAllTokenIds(collectionAddress.text, ChainList.mumbai, null, 0);
-        
-        for(int tokenId = 0; tokenId < int.Parse(CollectionCount.text); tokenId++)
+
+        foreach (GameObject image in NFTimageSpawned)
+        {
+            Destroy(image.gameObject);
+        }
+        NFTimageSpawned.Clear();
+        NftCollection collection = await MoralisInterface.GetClient().Web3Api.Token.GetAllTokenIds(collectionAddress.text, ChainList.mumbai, null, 0);
+        StartCoroutine(wait());
+        StartCoroutine(lol(collection));
+     /*   for (int tokenId = 0; tokenId < int.Parse(CollectionCount.text); tokenId++)
         {
            test(collection.Result[tokenId].TokenUri);
             
+        } */
+       
+       
+    }
+
+    IEnumerator lol(NftCollection data)
+    {
+       for(int tokenId = 0; tokenId < int.Parse(CollectionCount.text); tokenId++)
+        {
+            test(data.Result[tokenId].TokenUri);
+            yield return new WaitForSeconds(2);
         }
-       
-       
     }
     public void test(string file)
     {
@@ -251,7 +260,7 @@ public class CovelentData : MonoBehaviour
             await webRequest.SendWebRequest();
             //Gets the image from the web request and stores it as a texture
             Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
-            GameObject Nftcard = Instantiate(ListPrefab, point.transform.position, Quaternion.identity);
+            GameObject  Nftcard = Instantiate(ListPrefab, point.transform.position, Quaternion.identity);
             TMP_Text[] TokenText;
             TokenText = Nftcard.GetComponentsInChildren<TMP_Text>();
 
@@ -261,14 +270,10 @@ public class CovelentData : MonoBehaviour
             Nftcard.transform.SetParent(point.transform);
             //Sets the objects main render material to the texture
             NFTimage.material.mainTexture = texture;
+
+            NFTimageSpawned.Add(Nftcard);
         }
     }
-
-
-
-
-
-
 
 
 

@@ -83,5 +83,10 @@ public class LoadNFT : MonoBehaviour
         }
 
     }
+    private void OnMouseDown()
+    {
+        GetNFTImage();
+    }
+
 }
 

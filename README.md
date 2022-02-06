@@ -1,7 +1,9 @@
 # Metaplex
+
 ## This is a web3verse made with unity
 
-### The follwing file where ignore. due to the magnitude of the projects and are essential for the running of it locally
+### The follwing file where ignore due to the magnitude of the projects and are essential for the running of it locally
+
 ```sh
 /Assets/AgoraEngine/
 /Assets/Animations/
