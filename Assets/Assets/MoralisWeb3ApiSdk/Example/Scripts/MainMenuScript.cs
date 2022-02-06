@@ -287,7 +287,7 @@ public class MainMenuScript : MonoBehaviour
     {
         logoutButton.SetActive(true);
     }
-
+   
     private async void OnApplicationQuit()
     {
 

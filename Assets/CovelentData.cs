@@ -10,6 +10,9 @@ using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 using UnityEngine.UI;
+using MoralisWeb3ApiSdk;
+using System.Threading.Tasks;
+using Moralis.Web3Api.Models;
 
 public class CovelentData : MonoBehaviour
 {
@@ -40,6 +43,24 @@ public class CovelentData : MonoBehaviour
    public  GameObject ListPrefab;
     public GameObject point;
     public Image NFTimage;
+
+    // vars
+    //The chain to interact with, using Polygon here
+    private string chain = "polygon";
+
+    // The current connect account
+    //string Address = PlayerPrefs.GetString("Account");
+    //    string Address = "0x772A4f348d85FDd00e89fDE4C7CAe8628c8DAd19";
+    //The network to interact with (mainnet, testnet)
+    private string network = "testnet";
+    //Contract to interact with, contract below is "Project: Pigeon Smart Contract
+
+    private string contract = "0x407D0E3BB4A87CCf78aAcDb5F1bb80214D147722";
+    //Token ID to pull from contract
+    
+    //Used for storing metadata
+    Metadata metadata;
+
 
     private void Start()
     {
@@ -124,7 +145,7 @@ public class CovelentData : MonoBehaviour
         var url = "https://api.covalenthq.com/v1/80001/tokens/" + addressField.text + "/nft_token_ids/?&key=ckey_e22bfa8a9c734c1e816244b1529";
 
         StartCoroutine(DataCount(url));
-        StartCoroutine(OnNFTfetch());
+     //   StartCoroutine(OnNFTfetch());
 
     }
 
@@ -192,99 +213,196 @@ public class CovelentData : MonoBehaviour
         }
     }
 
+    public async void GetNftAsync()
+    {
+      NftCollection collection = await MoralisInterface.GetClient().Web3Api.Token.GetAllTokenIds(collectionAddress.text, ChainList.mumbai, null, 0);
+        
+        for(int tokenId = 0; tokenId < int.Parse(CollectionCount.text); tokenId++)
+        {
+           test(collection.Result[tokenId].TokenUri);
+            
+        }
+       
+       
+    }
+    public void test(string file)
+    {
+        WWW request = new WWW(file);
+        StartCoroutine(On(request));
+    }
+    IEnumerator On(WWW req)
+    {
+        yield return req;
+
+        MoralisRoot tokenuri = JsonConvert.DeserializeObject<MoralisRoot>(req.text);
+        Nfts(tokenuri.image,tokenuri.name,tokenuri.description);
+    }
+
+
+
+
+
+    public async void Nfts(string image, string name,string description)
+    {
+          //Performs another web request to collect the image related to the NFT
+        using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(image))
+        {
+            //Sends webrequest
+            await webRequest.SendWebRequest();
+            //Gets the image from the web request and stores it as a texture
+            Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
+            GameObject Nftcard = Instantiate(ListPrefab, point.transform.position, Quaternion.identity);
+            TMP_Text[] TokenText;
+            TokenText = Nftcard.GetComponentsInChildren<TMP_Text>();
+
+            TokenText[0].text = name;
+            TokenText[1].text = description;
+
+            Nftcard.transform.SetParent(point.transform);
+            //Sets the objects main render material to the texture
+            NFTimage.material.mainTexture = texture;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     public void OpenPolygonScan()
     {
 
         Application.OpenURL("https://mumbai.polygonscan.com/token/" + collectionAddress.text);
     }
-
-   /* public void NFT()
+    /*
+    async public void GetNFTImage()
     {
-        StartCoroutine(OnNFTfetch());
-
-
-    }*/
-    IEnumerator OnNFTfetch()
-    {
-
-        yield return new WaitForSeconds(10f);
-        if (int.Parse(CollectionCount.text) < 1)
+        for (int tokenId = 0; tokenId < 5; tokenId++)
         {
-            Debug.Log("lol");
-        }
-        else if (int.Parse(CollectionCount.text) >= 1)
-        {
-            for (int tokenId = 0; tokenId < int.Parse(CollectionCount.text) + 1; tokenId++)
+
+
+            //Interacts with the Blockchain to find the URI related to that specific token
+            string URI = await ERC721.URI(chain, network, contract,tokenId.ToString());
+            //   string response = await EVM.AllErc721(chain, network, account, contract);
+
+            //Perform webrequest to get JSON file from URI
+            using (UnityWebRequest webRequest = UnityWebRequest.Get(URI))
             {
-
-                StartCoroutine(holdup());
-                Wait(tokenId);
-                
-
+                //Sends webrequest
+                await webRequest.SendWebRequest();
+                //Gets text from webrequest
+                string metadataString = webRequest.downloadHandler.text;
+                //Converts the metadata string to the Metadata object
+                metadata = JsonConvert.DeserializeObject<Metadata>(metadataString);
+                print(metadata.image);
             }
         }
-
-    }
-    IEnumerator holdup()
-    {
-        yield return new WaitForSeconds(4f);
-    }
-    public void Wait(int tid)
-    {
-       StartCoroutine(chill(tid));
-       
-
-    }
-
-    IEnumerator chill(int tokenId)
-    {
-        yield return new WaitForSeconds(3f);
-        var NFTurl = "https://api.covalenthq.com/v1/80001/tokens/" + collectionAddress.text + "/nft_metadata/" + tokenId + "/?quote-currency=USD&format=JSON&key=ckey_e22bfa8a9c734c1e816244b1529";
-      
-      StartCoroutine(OnImage(NFTurl));
-
-    }
-
-    IEnumerator OnImage(string url)
-    {
-
-    
-        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-        HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-        StreamReader reader = new StreamReader(response.GetResponseStream());
-        yield return reader;
-        string json = reader.ReadToEnd();
-        Root data = JsonConvert.DeserializeObject<Root>(json);
-       // NFTImage(data.data.items[0].nft_data[0].external_data.image_256);
-        print(data.data.items[0].nft_data[0].external_data.image_256);
-
-    }
-    /* async private void NFTImage(string image)
-        {
-            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(image))
+            //Performs another web request to collect the image related to the NFT
+          /*  using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(metadata.image))
             {
                 //Sends webrequest
                 await webRequest.SendWebRequest();
                 //Gets the image from the web request and stores it as a texture
-                Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
-            //Sets the objects main render material to the texture
-            StartCoroutine(PrintNFT(texture));
-           // PrintNFT(texture);
-            // NFTprofile.material.mainTexture = texture;
-            
-            }
-        }
+                Texture texture = DownloadHandlerTexture.GetContent(webRequest);
+                //Sets the objects main render material to the texture
+                GetComponent<MeshRenderer>().material.mainTexture = texture;
+            } */
+        
+
+   /* }*/
+
+    /* public void NFT()
+     {
+         StartCoroutine(OnNFTfetch());
 
 
-    IEnumerator PrintNFT(Texture2D texture2D)
-    {
-        print("is it reaching here ?");
-        GameObject newObject =  Instantiate(ListPrefab,point.transform.position, Quaternion.identity);
-        newObject.transform.SetParent(point.transform);
-        yield return new WaitForSeconds(5f);
-        NFTimage.material.mainTexture = texture2D; */
+     }*/
+    /*  IEnumerator OnNFTfetch()
+      {
 
-   /* } */
+          yield return new WaitForSeconds(10f);
+          if (int.Parse(CollectionCount.text) < 1)
+          {
+              Debug.Log("lol");
+          }
+          else if (int.Parse(CollectionCount.text) >= 1)
+          {
+              for (int tokenId = 0; tokenId < int.Parse(CollectionCount.text) + 1; tokenId++)
+              {
+
+                 StartCoroutine(holdup(tokenId));
+
+
+
+              }
+          }
+
+      }
+      IEnumerator holdup(int tokenID)
+      {
+          yield return new WaitForSeconds(4f);
+          Wait(tokenID);
+      }
+      public void Wait(int tid)
+      {
+         StartCoroutine(chill(tid));
+
+
+      }
+
+      IEnumerator chill(int tokenId)
+      {
+          yield return new WaitForSeconds(3f);
+          var NFTurl = "https://api.covalenthq.com/v1/80001/tokens/" + collectionAddress.text + "/nft_metadata/" + tokenId + "/?quote-currency=USD&format=JSON&key=ckey_e22bfa8a9c734c1e816244b1529";
+
+        StartCoroutine(OnImage(NFTurl));
+
+      }
+
+      IEnumerator OnImage(string url)
+      {
+
+
+          HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+          HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+          StreamReader reader = new StreamReader(response.GetResponseStream());
+          yield return new WaitForSeconds(20f);
+          string json = reader.ReadToEnd();
+          Root data = JsonConvert.DeserializeObject<Root>(json);
+         // NFTImage(data.data.items[0].nft_data[0].external_data.image_256);
+          print(data.data.items[0].nft_data[0].external_data.image_256);
+
+      }
+      /* async private void NFTImage(string image)
+          {
+              using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(image))
+              {
+                  //Sends webrequest
+                  await webRequest.SendWebRequest();
+                  //Gets the image from the web request and stores it as a texture
+                  Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
+              //Sets the objects main render material to the texture
+              StartCoroutine(PrintNFT(texture));
+             // PrintNFT(texture);
+              // NFTprofile.material.mainTexture = texture;
+
+              }
+          }
+
+
+      IEnumerator PrintNFT(Texture2D texture2D)
+      {
+          print("is it reaching here ?");
+          GameObject newObject =  Instantiate(ListPrefab,point.transform.position, Quaternion.identity);
+          newObject.transform.SetParent(point.transform);
+          yield return new WaitForSeconds(5f);
+          NFTimage.material.mainTexture = texture2D; */
+
+    /* } */
 }
    

@@ -70,6 +70,7 @@ public class Root
 //------- COLLECTION DATA ------------//
 
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+[Serializable]
 public class Itemcov
 {
     public int contract_decimals { get; set; }
@@ -102,5 +103,14 @@ public class Rootcov
     public bool error { get; set; }
     public object error_message { get; set; }
     public object error_code { get; set; }
+}
+
+
+// moralis nft data
+public class MoralisRoot
+{
+    public string name { get; set; }
+    public string description { get; set; }
+    public string image { get; set; }
 }
 

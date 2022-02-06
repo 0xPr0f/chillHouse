@@ -565,5 +565,7 @@ namespace WalletConnectSharp.Unity
             if (waitForNewSession)
                 await ActiveSession.Connect();
         }
+
+        
     }
 }
