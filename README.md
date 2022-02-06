@@ -39,4 +39,9 @@ There is the option to turn on your miic and speak, but this is off by defualt a
 
 If you experience error with nft metadata not showing, you can always refresh for the hub and for the world you can click on the images to have them reload the metadata
 
+## you can try out the test on mac and windows
+
+https://github.com/0xPr0f/windowsTest [Windows]
+https://github.com/0xPr0f/Macos-test [MacOs]
+
 # Happy Exploring
