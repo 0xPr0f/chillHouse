@@ -41,7 +41,7 @@ If you experience error with nft metadata not showing, you can always refresh fo
 
 ## you can try out the test on mac and windows
 
-https://github.com/0xPr0f/windowsTest [Windows]
+https://github.com/0xPr0f/windowsTest [Windows]  
 https://github.com/0xPr0f/Macos-test [MacOs]
 
 # Happy Exploring
