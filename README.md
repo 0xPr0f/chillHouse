@@ -44,4 +44,6 @@ If you experience error with nft metadata not showing, you can always refresh fo
 https://github.com/0xPr0f/windowsTest [Windows]  
 https://github.com/0xPr0f/Macos-test [MacOs]
 
+## Project is deprecated, using a lower version of the sdk which isnt working 
+
 # Happy Exploring
